@@ -3,8 +3,6 @@ import { Scene } from './scene-types'
 export type VpnUser = {
   telegramUserId: number
   currentScene: Scene
-  configPcId?: number
-  configMobileId?: number
 }
 
 export type VpnConfig = {

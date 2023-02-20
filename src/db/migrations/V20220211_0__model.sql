@@ -21,13 +21,19 @@ CREATE INDEX IF NOT EXISTS vpn_server_server_id_idx ON vpn_server(server_id);
 CREATE TABLE IF NOT EXISTS vpn_config (
   config_id BIGSERIAL NOT NULL PRIMARY KEY,
   server_id BIGSERIAL NOT NULL REFERENCES vpn_server(server_id),
-  config_data TEXT NOT NULL
+  config_data TEXT
 );
 CREATE INDEX IF NOT EXISTS vpn_config_config_id_idx ON vpn_config(config_id);
 
 CREATE TABLE IF NOT EXISTS vpn_user (
   telegram_user_id BIGSERIAL NOT NULL REFERENCES telegram_user_data(telegram_user_id),
-  current_scene TEXT NOT NULL DEFAULT 'Start',
-  config_pc_id BIGSERIAL REFERENCES vpn_config(config_id),
-  config_mobile_id BIGSERIAL REFERENCES vpn_config(config_id)
+  current_scene JSONB NOT NULL,
+  primary key (telegram_user_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_vpn_config (
+   telegram_user_id BIGSERIAL NOT NULL REFERENCES telegram_user_data(telegram_user_id),
+   mobile_config_id BIGSERIAL NOT NULL REFERENCES vpn_config(config_id),
+   pc_config_id BIGSERIAL NOT NULL REFERENCES vpn_config(config_id)
+);
+

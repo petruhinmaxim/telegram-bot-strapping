@@ -90,10 +90,13 @@ export default class TelegrafActor {
         const scene = msg.outputPayload.scene
         let l10n = this.l10n(msg.userData);
         const text = l10n.getText(scene)
-        const extra = mrk.getMarkup(scene, l10n)
-        const messageId = await this.telegraf.telegram.sendMessage(msg.chatId, text, extra)
+        const messageId = await this.telegraf.telegram.sendMessage(msg.chatId, text, {
+          ...mrk.getMarkup(scene, l10n),
+          disable_web_page_preview: false,
+          parse_mode: 'MarkdownV2'
+        })
         msg.outputPayload.scene.messageId = messageId.message_id
-        await this.selfActor.getParent().send('processReturnOutboundWithMessageId', msg)
+        // await this.selfActor.getParent().send('processReturnOutboundWithMessageId', msg)
         break
       }
 

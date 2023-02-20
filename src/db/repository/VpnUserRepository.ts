@@ -3,20 +3,15 @@ import { VpnDBClientLocator, VpnDBConnection, VpnDB } from '../VpnDB'
 import { VpnUser } from '../../model/vpn-user-types'
 
 export interface VpnUserRepository {
-  insertVpnUser(
+  upsertVpnUser(
       connection: VpnDBConnection,
       VpnUser: VpnUser
-  ): Promise <VpnUser>
+  ): Promise<number>
 
   selectVpnUserByUserId(
       connection: VpnDBConnection,
       telegramUserId: number
   ): Promise<VpnUser | undefined>
-
-  updateVpnUser(
-      connection: VpnDBConnection,
-      vpnUser: VpnUser
-  ): Promise <VpnUser>
 }
 
 export function makeVpnUserRepository(db: VpnDB): VpnUserRepository {
@@ -30,13 +25,13 @@ class VpnUserRepositoryImpl implements VpnUserRepository {
     this.clientLocator = clientLocator;
   }
 
-  async insertVpnUser(
-    connection: VpnDBConnection,
-    vpnUser: VpnUser
-  ) {
-    return sql.insertVpnUser(
-      await this.clientLocator.ensureClient(connection),
-      vpnUser
+  async upsertVpnUser(
+      connection: VpnDBConnection,
+      vpnUser: VpnUser
+  ): Promise<number> {
+    return sql.upsertVpnUser(
+        await this.clientLocator.ensureClient(connection),
+        vpnUser
     )
   }
 
@@ -49,16 +44,6 @@ class VpnUserRepositoryImpl implements VpnUserRepository {
       telegramVpnUserId
     )
   }
-
-  async updateVpnUser(
-    connection: VpnDBConnection,
-    vpnUser: VpnUser
-  ) {
-    return sql.updateVpnUser(
-      await this.clientLocator.ensureClient(connection),
-        vpnUser
-    )
-  }
 }
 
 // sql
@@ -66,25 +51,25 @@ namespace sql {
   function vpnUserRowMapping(row: QueryResultRow): VpnUser {
     return {
       telegramUserId: Number(row.telegram_user_id),
-      currentScene: row.current_scene,
-      configPcId: row.config_pc_id,
-      configMobileId: row.config_mobile_id
+      currentScene: row.current_scene
     }
   }
 
-  export async function insertVpnUser(
-    client: ClientBase,
-    vpnUser: VpnUser
-  ) {
-    const { telegramUserId, currentScene, configPcId, configMobileId } = vpnUser
-    await client.query(
-      `
-      INSERT INTO vpn_user (telegram_user_id, current_scene, config_pc_id, config_mobile_id)
-      VALUES ($1, $2, $3, $4)
+  export async function upsertVpnUser(
+      client: ClientBase,
+      vpnUser: VpnUser
+  ): Promise<number> {
+    const { telegramUserId, currentScene } = vpnUser
+    const res = await client.query(
+        `
+          INSERT INTO vpn_user (telegram_user_id, current_scene)
+          VALUES ($1, $2)
+          ON CONFLICT (telegram_user_id) DO UPDATE SET
+            current_scene = excluded.current_scene
       `,
-      [telegramUserId, currentScene, configPcId, configMobileId]
+        [telegramUserId, currentScene]
     )
-    return vpnUser
+    return res.rowCount
   }
 
   export async function selectVpnUserByUserId(
@@ -97,23 +82,5 @@ namespace sql {
       [telegramUserId]
     )
     return res.rows.map(vpnUserRowMapping).shift()
-  }
-
-  export async function updateVpnUser(
-    client: ClientBase,
-    vpnUser: VpnUser
-  ) {
-    const { telegramUserId, currentScene, configPcId, configMobileId } = vpnUser
-    await client.query(
-      `
-      UPDATE vpn_user
-      SET current_scene = $2,
-          config_pc_id = $3,
-          config_mobile_id = $4
-      WHERE telegram_user_id = $1
-      `,
-        [telegramUserId, currentScene, configPcId, configMobileId]
-    )
-    return vpnUser
   }
 }

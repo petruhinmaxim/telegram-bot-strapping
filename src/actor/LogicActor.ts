@@ -79,10 +79,10 @@ export default class LogicActor {
             //todo analytics
             switch (msg.inputPayload.tpe) {
                 case 'TextInput':
-                    await this.processMainText(con, vpnUser, msg.inputPayload)
+                    await this.processMainText(con, vpnUser, msg.telegramUser, msg.inputPayload)
                     break
                 case 'CallbackInput':
-                    await this.processMainCallback(con, vpnUser, msg.inputPayload)
+                    await this.processMainCallback(con, vpnUser, msg.telegramUser, msg.inputPayload, )
                     break
             }
         })
@@ -91,6 +91,7 @@ export default class LogicActor {
     private async processMainCallback(
         con: VpnDBConnection,
         user: VpnUser,
+        userData: TelegramUserData,
         payload: tg.CallbackInput
     ) {
         const sceneTpeInCallbackData = markupDataParseSceneTpe(payload.data)
@@ -98,7 +99,8 @@ export default class LogicActor {
             case 'Start': {
                 user.currentScene = {
                     tpe: "Start",
-                    messageId: payload.messageId
+                    messageId: payload.messageId,
+                    userName: userData.firstName
                 }
                 break
             }
@@ -116,6 +118,34 @@ export default class LogicActor {
                 }
                 break
             }
+            case 'AndroidInstruction': {
+                user.currentScene = {
+                    tpe: "AndroidInstruction",
+                    messageId: payload.messageId
+                }
+                break
+            }
+            case 'WindowsInstruction': {
+                user.currentScene = {
+                    tpe: "WindowsInstruction",
+                    messageId: payload.messageId
+                }
+                break
+            }
+            case 'GetConfigs': {
+                user.currentScene = {
+                    tpe: "GetConfigs",
+                    messageId: payload.messageId
+                }
+                break
+            }
+            case 'GeneralInfo': {
+                user.currentScene = {
+                    tpe: "GeneralInfo",
+                    messageId: payload.messageId
+                }
+                break
+            }
             case 'DeleteMassage': {
                 user.currentScene = {
                     tpe: "DeleteMassage",
@@ -128,15 +158,17 @@ export default class LogicActor {
             tpe: 'EditOutput',
             scene: user.currentScene
         }
-        await this.vpnUserRepo.updateVpnUser(con, user)
+        await this.vpnUserRepo.upsertVpnUser(con, user)
         await this.sendToUser(user, out)
     }
 
     private async processMainText(
         con: VpnDBConnection,
         user: VpnUser,
+        userData: TelegramUserData,
         payload: tg.TextInput
     ) {
+        // dell user message
         let out: tg.OutputPayload = {
             tpe: 'DeleteMessageOutput',
             messageId: payload.messageId
@@ -144,16 +176,25 @@ export default class LogicActor {
         await this.sendToUser(user, out)
 
         if (payload.text == '/start') {
+            // del previous message
+            if (user.currentScene.messageId) {
+                out = {
+                    tpe: 'DeleteMessageOutput',
+                    messageId: user.currentScene.messageId
+                }
+                await this.sendToUser(user, out)
+            }
             user.currentScene = {
                 tpe: 'Start',
-                messageId: payload.messageId
+                messageId: payload.messageId,
+                userName: userData.firstName
             }
             out = {
                 tpe: 'SendOutput',
                 scene: user.currentScene
             }
         }
-        await this.vpnUserRepo.updateVpnUser(con, user)
         await this.sendToUser(user, out)
+        await this.vpnUserRepo.upsertVpnUser(con, user)
     }
 }

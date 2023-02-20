@@ -12,19 +12,40 @@ export class VpnL10nEn implements VpnL10n {
     }
 
     //navigation
+//navigation
     goToMainMenu(): string {
         return escapeString(
-            'Main menu'
+            'Главное меню'
         )
     }
     goToIphoneInstruction(): string {
         return escapeString(
-            'IphoneInstruction'
+            'Инструкция Iphone'
         )
     }
     goToMacInstruction(): string {
         return escapeString(
-            'MacInstruction'
+            'Инструкция Mac'
+        )
+    }
+    goToAndroidInstruction(): string {
+        return escapeString(
+            'Инструкция Android'
+        )
+    }
+    goToWindowsInstruction(): string {
+        return escapeString(
+            'Инструкция Windows'
+        )
+    }
+    goToGeneralInfo(): string {
+        return escapeString(
+            'Дополнительная информация'
+        )
+    }
+    goToGetConfigs(): string {
+        return escapeString(
+            'Скачать конфиги'
         )
     }
 
@@ -39,6 +60,18 @@ export class VpnL10nEn implements VpnL10n {
                 break
             case "MacInstruction":
                 text = this.goToMacInstruction()
+                break
+            case "AndroidInstruction":
+                text = this.goToAndroidInstruction()
+                break
+            case "WindowsInstruction":
+                text = this.goToWindowsInstruction()
+                break
+            case "GeneralInfo":
+                text = this.goToGeneralInfo()
+                break
+            case "GetConfigs":
+                text = this.goToGetConfigs()
                 break
         }
         return text
