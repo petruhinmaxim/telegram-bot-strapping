@@ -5,6 +5,7 @@
   "scripts": {
     "telegram-start": "cross-env NODE_OPTIONS=\"-r ts-node/register\" node src/scripts/vpn.ts",
     "telegram-debug": "cross-env NODE_OPTIONS=\"-r ts-node/register --inspect\" node src/scripts/vpn.ts",
+    "load-configs": "cross-env NODE_OPTIONS=\"-r ts-node/register --inspect\" node src/scripts/load-configs.ts",
     "db-create": "ts-node src/db/create-database.ts",
     "db-migrate": "flyway -c src/config/flyway.js migrate"
   },

@@ -7,18 +7,20 @@ export type VpnUser = {
 
 export type VpnConfig = {
   configId: number
+  configName: string
   serverId: number
   configData: string
+}
+
+export type UserConfigs = {
+    telegramUserId: number,
+    mobileConfigId: number,
+    pcConfigId: number
 }
 
 export type VpnServer = {
   serverId: number
   serverName: string
-  subscriptionDate: Date
-  ip: string
-  vnsIp: string
-  userName: string
-  password: string
 }
 
 export type TelegramUserData = {

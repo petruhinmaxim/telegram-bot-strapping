@@ -35,3 +35,17 @@ export function actorLogger(actor: ActorRef): Logger {
       console.log(formatMessage('ERROR', thread, messages)),
   }
 }
+
+export function consoleLogger(): Logger {
+  const thread = 'main'
+  return {
+    debug: (...messages: any[]): void =>
+        console.log(formatMessage('DEBUG', thread, messages)),
+    info: (...messages: any[]): void =>
+        console.log(formatMessage('INFO', thread, messages)),
+    warn: (...messages: any[]): void =>
+        console.log(formatMessage('WARN', thread, messages)),
+    error: (...messages: any[]): void =>
+        console.log(formatMessage('ERROR', thread, messages)),
+  }
+}

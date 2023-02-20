@@ -9,17 +9,13 @@ CREATE INDEX IF NOT EXISTS telegram_user_data_telegram_user_id_idx ON telegram_u
 
 CREATE TABLE IF NOT EXISTS vpn_server (
   server_id BIGSERIAL NOT NULL PRIMARY KEY,
-  server_name TEXT NOT NULL,
-  subscriptionDate DATE NOT NULL,
-  ip TEXT NOT NULL,
-  vnsIp TEXT NOT NULL,
-  userName TEXT NOT NULL,
-  password TEXT NOT NULL
+  server_name TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS vpn_server_server_id_idx ON vpn_server(server_id);
 
 CREATE TABLE IF NOT EXISTS vpn_config (
   config_id BIGSERIAL NOT NULL PRIMARY KEY,
+  config_name TEXT NOT NULL UNIQUE,
   server_id BIGSERIAL NOT NULL REFERENCES vpn_server(server_id),
   config_data TEXT
 );
