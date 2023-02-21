@@ -2,10 +2,9 @@ import {Pool} from 'pg'
 import config from '../config/config'
 import {consoleLogger} from '../util/Logger'
 import fs from 'fs'
-import {makeVpnDB, VpnDB, VpnDBConnection} from '../db/VpnDB'
-import path from 'path'
+import {makeVpnDB} from '../db/VpnDB'
 import {makeConfigRepository} from "../db/repository/ConfigRepository";
-import {UserConfigs, VpnConfig} from "../model/vpn-user-types";
+import {VpnConfig} from "../model/vpn-user-types";
 
 async function main() {
     const log = consoleLogger()
@@ -14,7 +13,6 @@ async function main() {
     const configRepo = makeConfigRepository(vpnDB)
     const filePath = process.argv[2]
     const serverId = Number (process.argv[3])
-    //получаем массив с содержимым файлов. Имена отсутствуют. На уникальност проверяется содержимое
     const configsData: {fileName:string, fileData:string}[] = parseFiles(filePath)
     log.info(`${configsData.length} configs for download`)
     for (const data of configsData) {

@@ -51,8 +51,8 @@ namespace sql {
     function userConfigsRowMapping(row: QueryResultRow): UserConfigs {
         return {
             telegramUserId: Number(row.config_id),
-            mobileConfigId: Number(row.server_id),
-            pcConfigId: Number(row.server_id)
+            mobileConfigId: Number(row.mobile_config_id),
+            pcConfigId: Number(row.pc_config_id)
         }
     }
 
@@ -61,7 +61,7 @@ namespace sql {
         userConfigs: UserConfigs
     ): Promise<UserConfigs> {
         const {telegramUserId, mobileConfigId, pcConfigId} = userConfigs
-        const res = await client.query(
+        await client.query(
             `
                 INSERT INTO user_vpn_config (telegram_user_id, mobile_config_id, pc_config_id)
                 VALUES ($1, $2, $3)

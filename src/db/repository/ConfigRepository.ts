@@ -15,7 +15,7 @@ export interface ConfigRepository {
 
     selectUnusedConfigs(
         connection: VpnDBConnection
-    ): Promise<VpnConfig[]>
+    ): Promise<{mobileConfigId:number, pcConfigId:number}>
 }
 
 export function makeConfigRepository(db: VpnDB): ConfigRepository {
@@ -51,7 +51,7 @@ class ConfigRepositoryImpl implements ConfigRepository {
 
     async selectUnusedConfigs(
         connection: VpnDBConnection
-    ): Promise<VpnConfig[]> {
+    ): Promise<{mobileConfigId:number, pcConfigId:number}> {
         return sql.selectUnusedConfigs(
             await this.clientLocator.ensureClient(connection))
     }
@@ -101,15 +101,21 @@ namespace sql {
         )
         return res.rows.map(configRowMapping).shift()
     }
-//todo left join with user_vpn_config
+
     export async function selectUnusedConfigs(
         client: ClientBase
-    ): Promise<VpnConfig[]> {
+    ): Promise<{ mobileConfigId: number, pcConfigId: number }> {
         const res = await client.query(
-            `SELECT *
+            `SELECT vpn_config.*
              FROM vpn_config
-             `,
+                      LEFT JOIN user_vpn_config uvc on vpn_config.config_id = uvc.mobile_config_id
+             WHERE telegram_user_id IS NULL
+             LIMIT 2
+            `,
         )
-        return res.rows.map(configRowMapping)
+        return {
+            mobileConfigId: res.rows.map(configRowMapping)[0].configId,
+            pcConfigId: res.rows.map(configRowMapping)[1].configId
+        }
     }
 }

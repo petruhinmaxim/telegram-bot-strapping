@@ -36,6 +36,8 @@ export type WindowsInstruction =  {
 export type GetConfigs =  {
   tpe: 'GetConfigs'
   messageId?: number
+  mobileConfigData: string
+  pcConfigData: string
 }
 
 export type GeneralInfo =  {

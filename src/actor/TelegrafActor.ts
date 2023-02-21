@@ -6,6 +6,7 @@ import {VpnL10n} from '../scenes/l10n/VpnL10n'
 import {VpnL10nEn} from '../scenes/l10n/VpnL10nEn'
 import {VpnL10nRu} from '../scenes/l10n/VpnL10nRu'
 import * as mrk from '../scenes/scene-markup'
+import fs from "fs";
 
 export interface TelegrafActorProps {
   token: string
@@ -124,6 +125,25 @@ export default class TelegrafActor {
           msg.chatId,
           msg.outputPayload.text
         )
+        break
+
+      case 'SendFile':
+          if (msg.outputPayload.scene.tpe == "GetConfigs") {
+            const mobileConfigData = msg.outputPayload.scene.mobileConfigData
+            const pcConfigData = msg.outputPayload.scene.pcConfigData
+            fs.writeFileSync('mobileConfig.ovpn', mobileConfigData)
+            fs.writeFileSync('pcConfig.ovpn', pcConfigData)
+            await this.telegraf.telegram.sendDocument(
+                msg.chatId, { filename: "mobileConfig.ovpn",
+                  source: `./mobileConfig.ovpn`}
+            )
+            await this.telegraf.telegram.sendDocument(
+                msg.chatId, { filename: "pcConfig.ovpn",
+                  source: `./pcConfig.ovpn`}
+            )
+            fs.unlink(`./mobileConfig.ovpn`, err => {})
+            fs.unlink(`./pcConfig.ovpn`, err => {})
+          }
         break
     }
   }

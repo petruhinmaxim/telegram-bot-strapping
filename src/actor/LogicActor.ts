@@ -1,11 +1,13 @@
 import {Actor} from 'comedy'
 import {actorLogger, Logger} from '../util/Logger'
 import * as tg from '../model/telegram-massege-types'
-import {TelegramUserData, telegramUserEquals, VpnUser} from '../model/vpn-user-types'
+import {TelegramUserData, telegramUserEquals, UserConfigs, VpnConfig, VpnUser} from '../model/vpn-user-types'
 import {VpnDB, VpnDBConnection} from '../db/VpnDB'
 import {makeTelegramUserDataRepository, TelegramUserDataRepository} from '../db/repository/TelegramUserDataRepository'
 import {makeVpnUserRepository, VpnUserRepository} from "../db/repository/VpnUserRepository";
-import {markupDataParseActionInScene, markupDataParseSceneTpe} from '../scenes/scene-markup'
+import {markupDataParseSceneTpe} from '../scenes/scene-markup'
+import {ConfigRepository, makeConfigRepository} from "../db/repository/ConfigRepository";
+import {makeUserConfigRepository, UserConfigRepository} from "../db/repository/UserConfigRepository";
 
 export default class LogicActor {
     private readonly vpnDB: VpnDB
@@ -13,6 +15,8 @@ export default class LogicActor {
     private selfActor!: Actor
     private telegramUserDataRepo!: TelegramUserDataRepository
     private vpnUserRepo!: VpnUserRepository
+    private configRepo!: ConfigRepository
+    private userConfigsRepo!: UserConfigRepository
 
     static inject() {
         return ['VpnDBResource']
@@ -27,6 +31,8 @@ export default class LogicActor {
         this.selfActor = selfActor
         this.telegramUserDataRepo = makeTelegramUserDataRepository(this.vpnDB)
         this.vpnUserRepo = makeVpnUserRepository(this.vpnDB)
+        this.configRepo = makeConfigRepository(this.vpnDB)
+        this.userConfigsRepo = makeUserConfigRepository(this.vpnDB)
         this.log.info('init')
     }
 
@@ -82,7 +88,7 @@ export default class LogicActor {
                     await this.processMainText(con, vpnUser, msg.telegramUser, msg.inputPayload)
                     break
                 case 'CallbackInput':
-                    await this.processMainCallback(con, vpnUser, msg.telegramUser, msg.inputPayload, )
+                    await this.processMainCallback(con, vpnUser, msg.telegramUser, msg.inputPayload,)
                     break
             }
         })
@@ -133,10 +139,42 @@ export default class LogicActor {
                 break
             }
             case 'GetConfigs': {
-                user.currentScene = {
-                    tpe: "GetConfigs",
-                    messageId: payload.messageId
+                let mobileConfigId: number
+                let pcConfigId: number
+                let userConfigs: UserConfigs | undefined
+                await this.vpnDB.withConnection(this.log, async con => {
+                    userConfigs = await this.userConfigsRepo.selectConfigsById(con, userData.telegramUserId)
+                })
+                if (userConfigs) {
+                    mobileConfigId = userConfigs.mobileConfigId
+                    pcConfigId = userConfigs.pcConfigId
+                } else {
+                    await this.vpnDB.withConnection(this.log, async con => {
+                        const userConfigsId: { mobileConfigId: number, pcConfigId: number } =
+                            await this.configRepo.selectUnusedConfigs(con)
+                        mobileConfigId = userConfigsId.mobileConfigId
+                        pcConfigId = userConfigsId.pcConfigId
+
+                        await this.userConfigsRepo.insertUserConfig(con, {
+                            telegramUserId: user.telegramUserId,
+                            mobileConfigId,
+                            pcConfigId
+                        })
+                    })
                 }
+                let mobileConfig: VpnConfig | undefined
+                let pcConfig: VpnConfig | undefined
+                await this.vpnDB.withConnection(this.log, async con => {
+                    mobileConfig = await this.configRepo.selectConfigById(con, mobileConfigId)
+                    pcConfig = await this.configRepo.selectConfigById(con, pcConfigId)
+                })
+                if (mobileConfig && pcConfig)
+                    user.currentScene = {
+                        tpe: "GetConfigs",
+                        messageId: payload.messageId,
+                        mobileConfigData: mobileConfig.configData,
+                        pcConfigData: pcConfig.configData
+                    }
                 break
             }
             case 'GeneralInfo': {
@@ -154,9 +192,18 @@ export default class LogicActor {
                 break
             }
         }
-        let out: tg.OutputPayload = {
-            tpe: 'EditOutput',
-            scene: user.currentScene
+        let out: tg.OutputPayload
+        if(sceneTpeInCallbackData == "GetConfigs") {
+            out = {
+                tpe: 'SendFile',
+                scene: user.currentScene
+            }
+        }
+        else {
+            out = {
+                tpe: 'EditOutput',
+                scene: user.currentScene
+            }
         }
         await this.vpnUserRepo.upsertVpnUser(con, user)
         await this.sendToUser(user, out)
@@ -198,3 +245,4 @@ export default class LogicActor {
         await this.vpnUserRepo.upsertVpnUser(con, user)
     }
 }
+

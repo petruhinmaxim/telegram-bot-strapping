@@ -33,6 +33,7 @@ export type OutputPayload =
   | DeleteMessageOutput
   | EditOutput
   | SendOutput
+  | SendFile
 
 export type TextOutput = {
   tpe: 'TextOutput'
@@ -41,6 +42,11 @@ export type TextOutput = {
 
 export type SendOutput = {
   tpe: 'SendOutput'
+  scene: Scene
+}
+
+export type SendFile = {
+  tpe: 'SendFile'
   scene: Scene
 }
 
