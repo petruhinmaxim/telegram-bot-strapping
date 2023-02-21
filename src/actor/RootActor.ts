@@ -82,7 +82,7 @@ export default class RootActor {
     }
   }
 
-  async processReturnOutboundWithMessageId(msg: tg.OutboundTelegramMessage) {
-    await this.logicActor.send('processReturnOutboundWithMessageId', msg)
+  async processResendOutboundMessage(msg: tg.OutboundTelegramMessage) {
+    await this.logicActor.send('processResendOutboundMessage', msg)
   }
 }

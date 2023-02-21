@@ -245,4 +245,3 @@ export default class LogicActor {
         await this.vpnUserRepo.upsertVpnUser(con, user)
     }
 }
-
